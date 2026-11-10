@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Working Papers</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lora:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="demo-backend.js"></script>
+<script src="methodology-catalog.js"></script>
+<style>
+  :root {
+    --paper: #EEF3EA; --paper-card: #F8FAF5; --ink: #16241C; --ink-soft: #4B5B50;
+    --rule: #B9CDBB; --rule-soft: #D6E2D3; --pine: #22392F; --pine-2: #2D493C;
+    --stamp: #9E2B25; --gold: #A67C3D;
+    --pending: #8C8368; --prepared: #3A6EA5; --reviewed: #A67C3D; --approved: #2E7D4F;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; background: var(--paper); color: var(--ink); font-family: "IBM Plex Sans", -apple-system, sans-serif; }
+  h1, h2, h3 { font-family: "Lora", Georgia, serif; }
+  button { font-family: inherit; cursor: pointer; }
+  input, select, textarea { font-family: inherit; font-size: 14px; }
+  a { color: var(--prepared); }
+
+  /* ---------- login ---------- */
+  #login-screen { min-height: 100%; display: flex; align-items: center; justify-content: center; padding: 20px; }
+  .login-box { background: var(--paper-card); border: 1px solid var(--rule); border-radius: 4px; padding: 32px 30px; width: 100%; max-width: 360px; }
+  .login-box h1 { font-size: 22px; margin: 0 0 4px; }
+  .login-box .sub { font-size: 13px; color: var(--ink-soft); margin-bottom: 20px; }
+  .login-box .field { margin-bottom: 14px; }
+  .login-box label { display: block; font-size: 12px; font-weight: 600; color: var(--ink-soft); margin-bottom: 4px; }
+  .login-box input { width: 100%; padding: 9px 10px; border: 1px solid var(--rule); border-radius: 3px; background: var(--paper); color: var(--ink); }
+  .login-box .btn { width: 100%; margin-top: 6px; }
+  .login-err { color: var(--stamp); font-size: 12.5px; margin-top: 10px; min-height: 16px; }
+
+  /* ---------- shared ---------- */
+  #app { display: none; min-height: 100%; }
+  #app.ready { display: flex; }
+  #sidebar { width: 250px; flex-shrink: 0; background: var(--pine); color: #EFF4EC; padding: 0 0 16px; display: flex; flex-direction: column; }
+  #brand { padding: 18px 18px 14px; border-bottom: 1px solid rgba(255,255,255,.14); }
+  #brand .mark { font-family: "Lora", serif; font-weight: 600; font-size: 19px; }
+  #brand .sub { font-size: 11.5px; color: #B9CBB6; margin-top: 3px; }
+  #engagement-tabs { flex: 1; overflow-y: auto; padding: 10px 0; }
+  .tab-item { display: block; width: 100%; text-align: left; background: none; border: none; color: #DCE6D8; padding: 10px 16px 10px 14px; border-left: 3px solid transparent; font-size: 13.5px; line-height: 1.35; }
+  .tab-item .c { display:block; font-weight: 600; color: #fff; }
+  .tab-item .p { display:block; font-size: 11.5px; color: #A9C0A5; margin-top: 1px; }
+  .tab-item:hover { background: rgba(255,255,255,.06); }
+  .tab-item.active { background: var(--pine-2); border-left-color: var(--gold); }
+  #sidebar-foot { padding: 10px 12px 0; border-top: 1px solid rgba(255,255,255,.14); margin-top: 6px; }
+  .side-btn { width: 100%; text-align: left; background: none; border: none; color: #DCE6D8; padding: 9px 10px; border-radius: 3px; font-size: 13px; }
+  .side-btn:hover { background: rgba(255,255,255,.08); }
+  .side-btn.primary { color: #fff; font-weight: 600; }
+  #main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+  #topbar { display: flex; align-items: center; justify-content: flex-end; gap: 10px; padding: 12px 22px; border-bottom: 1px solid var(--rule); }
+  #whoami { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--ink-soft); }
+  #whoami .role-chip { font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 2px; border: 1px solid var(--rule); }
+  #whoami .signout { background: none; border: none; color: var(--ink-soft); font-size: 12.5px; text-decoration: underline; }
+  #content { flex: 1; overflow-y: auto; padding: 26px 30px 60px; max-width: 980px; width: 100%; margin: 0 auto; }
+  .empty { text-align: center; padding: 70px 20px; color: var(--ink-soft); }
+  .empty h2 { color: var(--ink); margin-bottom: 8px; }
+  .empty p { max-width: 420px; margin: 0 auto 18px; line-height: 1.5; }
+  .eng-head { margin-bottom: 18px; }
+  .eng-head h1 { font-size: 25px; margin: 0 0 4px; }
+  .eng-head .meta { font-size: 13px; color: var(--ink-soft); display: flex; flex-wrap: wrap; gap: 4px 14px; }
+  .team-row { display: flex; gap: 18px; margin-top: 12px; flex-wrap: wrap; align-items: flex-end; }
+  .team-slot { font-size: 12.5px; color: var(--ink-soft); }
+  .team-slot strong { display: block; color: var(--ink); font-size: 13.5px; font-weight: 600; }
+  .phase-bar { display: flex; border-bottom: 2px solid var(--rule); margin: 20px 0 0; gap: 2px; }
+  .phase-tab { background: none; border: none; padding: 10px 4px; margin-right: 22px; font-size: 13.5px; font-weight: 600; color: var(--ink-soft); border-bottom: 2px solid transparent; margin-bottom: -2px; }
+  .phase-tab .count { font-weight: 400; font-size: 11.5px; }
+  .phase-tab.active { color: var(--ink); border-bottom-color: var(--gold); }
+  .ledger { margin-top: 14px; border-top: 1px solid var(--rule); }
+  .litem { border-bottom: 1px solid var(--rule-soft); padding: 12px 2px; }
+  .lrow { display: grid; grid-template-columns: 44px 1fr auto auto; gap: 14px; align-items: start; cursor: pointer; }
+  .ref { font-weight: 600; color: var(--ink-soft); font-size: 12.5px; padding-top: 3px; }
+  .titlecol .t { font-size: 14.5px; font-weight: 500; }
+  .titlecol .a { font-size: 12px; color: var(--ink-soft); margin-top: 2px; }
+  .pill { font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 2px; white-space: nowrap; border: 1px solid transparent; }
+  .pill-pending { color: var(--pending); border-color: var(--pending); }
+  .pill-prepared { color: #fff; background: var(--prepared); }
+  .pill-reviewed { color: #fff; background: var(--reviewed); }
+  .pill-approved { color: #fff; background: var(--approved); }
+  .chev { color: var(--ink-soft); font-size: 12px; padding-top: 4px; }
+  .detail { display: none; padding: 12px 2px 4px 58px; }
+  .litem.open .detail { display: block; }
+  .detail textarea { width: 100%; min-height: 56px; border: 1px solid var(--rule); border-radius: 3px; background: var(--paper-card); color: var(--ink); padding: 8px 10px; resize: vertical; }
+  .detail-row { display: flex; gap: 10px; align-items: center; margin-top: 8px; flex-wrap: wrap; }
+  .btn { border: 1px solid var(--pine-2); background: var(--pine-2); color: #fff; padding: 7px 14px; border-radius: 3px; font-size: 12.5px; font-weight: 600; }
+  .btn.ghost { background: none; color: var(--pine-2); border-color: var(--rule); }
+  .btn.danger { background: none; border-color: var(--stamp); color: var(--stamp); }
+  .btn.small { padding: 5px 10px; font-size: 11.5px; }
+  .attach-line { font-size: 12.5px; color: var(--ink-soft); }
+  .locked-note { font-size: 12px; color: var(--ink-soft); font-style: italic; margin-top: 6px; }
+  .overlay { position: fixed; inset: 0; background: rgba(15,20,15,.5); display: flex; align-items: flex-start; justify-content: center; padding: 6vh 16px; z-index: 20; overflow-y:auto; }
+  .modal { background: var(--paper-card); border-radius: 4px; padding: 24px 26px; width: 100%; max-width: 460px; border: 1px solid var(--rule); }
+  .modal h2 { margin: 0 0 16px; font-size: 19px; }
+  .field { margin-bottom: 13px; }
+  .field label { display: block; font-size: 12px; font-weight: 600; color: var(--ink-soft); margin-bottom: 4px; }
+  .field input, .field select { width: 100%; padding: 8px 10px; border: 1px solid var(--rule); border-radius: 3px; background: var(--paper); color: var(--ink); }
+  .search-wrap { position: relative; }
+  .search-results { position: absolute; top: 100%; left: 0; right: 0; background: var(--paper-card); border: 1px solid var(--rule); border-top: none; z-index: 5; max-height: 160px; overflow-y: auto; }
+  .search-results div { padding: 7px 10px; font-size: 13px; }
+  .search-results div:hover { background: var(--rule-soft); }
+  .picked { font-size: 12.5px; margin-top: 4px; color: var(--ink-soft); }
+  .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 18px; }
+  .team-panel h1 { font-size: 22px; margin-bottom: 4px; }
+  .team-panel > p { color: var(--ink-soft); font-size: 13.5px; max-width: 560px; line-height: 1.5; }
+  .assign-box { border: 1px solid var(--rule); border-radius: 4px; padding: 16px; margin: 18px 0; background: var(--paper-card); max-width: 480px; }
+  .role-list { border-top: 1px solid var(--rule); margin-top: 8px; }
+  .role-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 2px; border-bottom: 1px solid var(--rule-soft); }
+  .role-row select { padding: 5px 8px; border: 1px solid var(--rule); border-radius: 3px; }
+  @media (max-width: 760px) {
+    #app { flex-direction: column; }
+    #sidebar { width: 100%; flex-direction: row; align-items: center; padding: 0 8px; }
+    #brand { border: none; padding: 10px 8px; }
+    #engagement-tabs { display: flex; overflow-x: auto; padding: 0; }
+    .tab-item { width: auto; white-space: nowrap; border-left: none; border-bottom: 3px solid transparent; }
+    .tab-item.active { border-left: none; border-bottom-color: var(--gold); }
+    #sidebar-foot { border: none; display: flex; padding: 6px; }
+    #content { padding: 18px 16px 50px; }
+    .lrow { grid-template-columns: 30px 1fr auto; }
+    .chev { display: none; }
+    .detail { padding-left: 40px; }
+  }
+</style>
+</head>
+<body>
+
+<div id="login-screen">
+  <div class="login-box">
+    <h1>Working Papers</h1>
+    <div class="sub">Local demo · sample@gmail.com / sample</div>
+    <div class="field"><label>Email</label><input type="email" id="login-email" autocomplete="username"></div>
+    <div class="field"><label>Password</label><input type="password" id="login-password" autocomplete="current-password"></div>
+    <button class="btn" id="login-btn" style="width:100%;">Sign in</button>
+    <div class="login-err" id="login-err"></div>
+  </div>
+</div>
+
+<div id="app">
+  <div id="sidebar">
+    <div id="brand"><div class="mark">Working Papers</div><div class="sub">Audit engagement tracker</div></div>
+    <div id="engagement-tabs"></div>
+    <div id="sidebar-foot">
+      <button class="side-btn" data-action="open-team">Team &amp; roles</button>
+      <button class="side-btn primary" data-action="new-engagement" id="new-eng-btn" style="display:none;">+ New engagement</button>
+    </div>
+  </div>
+  <div id="main">
+    <div id="topbar"><span style="margin-right:auto;font-size:12px;">Testing demo · data saved only in this browser</span><div id="whoami"></div></div>
+    <div id="content"></div>
+  </div>
+</div>
+<input type="file" id="file-input" style="display:none;">
+
+<script>
+(function(){
+  "use strict";
+
+  // ============ CONFIG — fill these in after creating your Supabase project ============
+  // Project Settings > API in your Supabase dashboard.
+  var SUPABASE_URL = "https://YOUR-PROJECT-REF.supabase.co";
+  var SUPABASE_ANON_KEY = "YOUR-ANON-PUBLIC-KEY";
+  // =======================================================================================
+
+  var sb = window.demoBackend;
+
+  var myId = null, myProfile = null;
+  var engagements = [];
+  var selectedEngagementId = null;
+  var checklistItems = [];
+  var activePhase = 'planning';
+  var view = 'engagement';
+  var openItemId = null;
+  var pendingFileTarget = null;
+  var newEngPick = { preparer: null, reviewer: null, partner: null };
+  var teamPick = null;
+  var profileCache = {};
+
+  var PHASES = [
+    { key: 'planning', label: 'Planning', prefix: 'A', items: [
+      "Client acceptance / continuance evaluation","Engagement letter","Independence and ethics checklist",
+      "Understanding the entity and its environment","Preliminary analytical review",
+      "Materiality computation (overall and performance)","Risk assessment and response (RMM)",
+      "Fraud risk discussion and assessment","Audit strategy and audit plan","Staffing and time budget"
+    ]},
+    { key: 'fieldwork', label: 'Fieldwork', prefix: 'B', items: [
+      "Cash and cash equivalents","Trade and other receivables","Inventories","Property, plant and equipment",
+      "Investments","Trade and other payables","Loans payable / borrowings","Equity","Revenue",
+      "Cost of sales and expenses","Related party transactions","Contingencies and commitments",
+      "Subsequent events review","Going concern assessment"
+    ]},
+    { key: 'reporting', label: 'Reporting', prefix: 'C', items: [
+      "Draft financial statements review","Disclosure checklist (PFRS / PAS compliance)",
+      "Summary of audit adjustments / unadjusted differences","Management representation letter",
+      "Engagement quality / partner review","Draft independent auditor's report",
+      "Final assembly and archiving of audit file"
+    ]}
+  ];
+  var METHODOLOGIES = window.METHODOLOGIES;
+  function methodology(e) { return METHODOLOGIES.find(function(m){ return m.key === e.engagement_type; }); }
+  var ROLE_OPTIONS = ["Partner", "Reviewer", "Preparer", "Staff"];
+
+  function esc(s){
+    var d = document.createElement('div');
+    d.textContent = (s === null || s === undefined) ? '' : String(s);
+    return d.innerHTML;
+  }
+  function statusLabel(s){ return { pending:'Pending', prepared:'Prepared', reviewed:'Reviewed', approved:'Approved' }[s] || s; }
+  function isPartner(){ return myProfile && myProfile.role === 'Partner'; }
+
+  // ---------------- auth ----------------
+  document.getElementById('login-btn').addEventListener('click', function(){ doSignIn(); });
+  document.getElementById('login-password').addEventListener('keydown', function(ev){ if (ev.key === 'Enter') doSignIn(); });
+
+  async function doSignIn(){
+    var email = document.getElementById('login-email').value.trim();
+    var password = document.getElementById('login-password').value;
+    var err = document.getElementById('login-err');
+    err.textContent = '';
+    if (!email || !password){ err.textContent = 'Enter your email and password.'; return; }
+    var res = await sb.auth.signInWithPassword({ email: email, password: password });
+    if (res.error){ err.textContent = res.error.message; return; }
+    await afterLogin();
+  }
+
+  async function doSignOut(){
+    await sb.auth.signOut();
+    myId = null; myProfile = null;
+    document.getElementById('app').classList.remove('ready');
+    document.getElementById('login-screen').style.display = 'flex';
+    document.getElementById('login-email').value = '';
+    document.getElementById('login-password').value = '';
+  }
+
+  async function afterLogin(){
+    var sess = await sb.auth.getSession();
+    var user = sess.data.session && sess.data.session.user;
+    if (!user){ return; }
+    myId = user.id;
+    var prof = await sb.from('profiles').select('*').eq('id', myId).single();
+    myProfile = prof.data || { id: myId, full_name: user.email, role: 'Staff' };
+    profileCache[myId] = myProfile;
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app').classList.add('ready');
+    renderWhoAmI();
+    await loadEngagements();
+  }
+
+  (async function initSession(){
+    var sess = await sb.auth.getSession();
+    if (sess.data.session){ await afterLogin(); }
+  })();
+
+  // ---------------- data loading ----------------
+  async function loadEngagements(){
+    var res = await sb.from('engagements').select('*').order('created_at', { ascending: false });
+    engagements = res.data || [];
+    if (!selectedEngagementId && engagements.length){
+      await selectEngagement(engagements[0].id);
+    } else {
+      renderSidebar();
+      if (view === 'engagement') renderContent();
+    }
+  }
+
+  async function selectEngagement(id){
+    selectedEngagementId = id;
+    view = 'engagement';
+    activePhase = 'planning';
+    openItemId = null;
+    var res = await sb.from('checklist_items').select('*').eq('engagement_id', id).order('order_num');
+    checklistItems = res.data || [];
+    renderSidebar();
+    renderContent();
+  }
+
+  async function reloadChecklist(){
+    var res = await sb.from('checklist_items').select('*').eq('engagement_id', selectedEngagementId).order('order_num');
+    checklistItems = res.data || [];
+    renderContent();
+  }
+
+  async function resolveNames(ids){
+    var unique = ids.filter(function(v,i,a){ return v && a.indexOf(v) === i; });
+    var missing = unique.filter(function(id){ return !profileCache[id]; });
+    if (missing.length){
+      var res = await sb.from('profiles').select('id,full_name,role').in('id', missing);
+      (res.data || []).forEach(function(p){ profileCache[p.id] = p; });
+    }
+    var out = {};
+    unique.forEach(function(id){ out[id] = profileCache[id] ? profileCache[id].full_name : ''; });
+    return out;
+  }
+
+  // ---------------- who am i ----------------
+  function renderWhoAmI(){
+    var box = document.getElementById('whoami');
+    box.innerHTML = '<span>' + esc(myProfile.full_name || 'You') + '</span>' +
+      '<span class="role-chip">' + esc(myProfile.role) + '</span>' +
+      '<button class="signout" data-action="sign-out">Sign out</button>';
+  }
+
+  function canManageFirm(){ return isPartner() || engagements.length === 0; }
+  function canManageRoles(){ return isPartner(); }
+
+  // ---------------- sidebar ----------------
+  function renderSidebar(){
+    var wrap = document.getElementById('engagement-tabs');
+    if (!engagements.length){
+      wrap.innerHTML = '<div style="padding:14px 16px;color:#B9CBB6;font-size:12.5px;">No engagements yet.</div>';
+    } else {
+      wrap.innerHTML = engagements.map(function(e){
+        var active = (e.id === selectedEngagementId && view === 'engagement');
+        return '<button class="tab-item' + (active ? ' active' : '') + '" data-action="select-engagement" data-id="' + e.id + '">' +
+          '<span class="c">' + esc(e.client_name) + '</span>' +
+          '<span class="p">' + esc(e.period || '') + ' &middot; ' + esc(e.status || 'Planning') + '</span></button>';
+      }).join('');
+    }
+    document.getElementById('new-eng-btn').style.display = canManageFirm() ? 'block' : 'none';
+  }
+
+  // ---------------- content router ----------------
+  function renderContent(){
+    var c = document.getElementById('content');
+    if (view === 'team'){ renderTeamPanel(c); return; }
+    var e = engagements.filter(function(x){ return x.id === selectedEngagementId; })[0];
+    if (!e){
+      c.innerHTML = '<div class="empty"><h2>No engagement selected</h2>' +
+        '<p>Create your first audit engagement to start tracking it from planning through reporting.</p>' +
+        (canManageFirm() ? '<button class="btn" data-action="new-engagement">+ New engagement</button>' : '<p style="font-size:12.5px;">Ask a partner to set one up, or to give you the Partner role under Team &amp; roles.</p>') +
+        '</div>';
+      return;
+    }
+    renderEngagement(c, e);
+  }
+
+  async function renderEngagement(c, e){
+    var items = checklistItems.filter(function(it){ return it.phase === activePhase; })
+      .sort(function(a,b){ return (a.order_num||0) - (b.order_num||0); });
+    var names = await resolveNames([e.preparer_id, e.reviewer_id, e.partner_id].filter(Boolean));
+
+    var html = '';
+    html += '<div class="eng-head"><h1>' + esc(e.client_name) + '</h1>';
+    html += '<div class="meta"><span>' + esc(e.industry || 'General') + '</span><span>&middot;</span><span>' + esc(e.period || '') + '</span><span>&middot;</span><span>' + esc(e.status || 'Planning') + '</span></div>';
+    var method = methodology(e);
+    html += '<p style="font-size:13px;color:var(--ink-soft);">Methodology: ' + esc(method ? method.label : 'Legacy generic checklist') + '</p>';
+    html += '<div class="team-row">';
+    html += teamSlot('Preparer', e.preparer_id, names);
+    html += teamSlot('Reviewer', e.reviewer_id, names);
+    html += teamSlot('Partner', e.partner_id, names);
+    if (isPartner() || myId === e.preparer_id || myId === e.reviewer_id || myId === e.partner_id){
+      html += '<button class="btn ghost small" data-action="edit-team" data-id="' + e.id + '">Edit assignments</button>';
+    }
+    html += '</div></div>';
+
+    html += '<div class="phase-bar">';
+    PHASES.forEach(function(p){
+      var pItems = checklistItems.filter(function(it){ return it.phase === p.key; });
+      var approved = pItems.filter(function(it){ return it.status === 'approved'; }).length;
+      html += '<button class="phase-tab' + (p.key === activePhase ? ' active' : '') + '" data-action="select-phase" data-phase="' + p.key + '">' +
+        esc(p.label) + ' <span class="count">' + approved + '/' + pItems.length + '</span></button>';
+    });
+    html += '</div>';
+
+    html += '<div class="ledger">';
+    if (!items.length){
+      html += '<div class="empty" style="padding:40px 10px;"><p>No working papers supplied for this chapter. The methodology package needs to be completed before this phase can be tracked.</p></div>';
+    } else {
+      items.forEach(function(it){ html += renderItem(it, e, names); });
+    }
+    html += '</div>';
+    html += '<div class="detail-row" style="margin-top:18px;"><button class="btn ghost small" data-action="export-csv">Export status (CSV)</button></div>';
+    c.innerHTML = html;
+  }
+
+  function teamSlot(label, uid, names){
+    var name = uid ? (names[uid] || 'Someone') : '\u2014 unassigned';
+    return '<div class="team-slot">' + esc(label) + '<strong>' + esc(name) + '</strong></div>';
+  }
+
+  function renderItem(it, e, names){
+    var open = (openItemId === it.id);
+    var canPrep = canDo(e, it, 'prepare');
+    var canRev = canDo(e, it, 'review');
+    var canApp = canDo(e, it, 'approve');
+    var canReopen = canDo(e, it, 'reopen');
+    var canEdit = canDo(e, it, 'edit');
+
+    var assignedLabel = '';
+    if (it.status === 'pending') assignedLabel = e.preparer_id ? ('awaiting ' + esc(names[e.preparer_id] || 'preparer')) : 'no preparer assigned';
+    else if (it.status === 'prepared') assignedLabel = e.reviewer_id ? ('awaiting ' + esc(names[e.reviewer_id] || 'reviewer')) : 'no reviewer assigned';
+    else if (it.status === 'reviewed') assignedLabel = e.partner_id ? ('awaiting ' + esc(names[e.partner_id] || 'partner')) : 'no partner assigned';
+    else if (it.status === 'approved') assignedLabel = 'signed off';
+
+    var html = '<div class="litem' + (open ? ' open' : '') + '" data-item="' + it.id + '">';
+    html += '<div class="lrow" data-action="toggle-item" data-id="' + it.id + '">';
+    html += '<div class="ref">' + esc(it.ref) + '</div>';
+    html += '<div class="titlecol"><div class="t">' + esc(it.title) + '</div><div class="a">' + assignedLabel + '</div></div>';
+    html += '<div class="pill pill-' + it.status + '">' + statusLabel(it.status) + '</div>';
+    html += '<div class="chev">' + (open ? '\u2212' : '+') + '</div></div>';
+
+    if (open){
+      html += '<div class="detail">';
+      html += '<textarea data-item-notes="' + it.id + '" placeholder="Notes for this item\u2026" ' + (canEdit ? '' : 'readonly') + '>' + esc(it.notes || '') + '</textarea>';
+      if (canEdit) html += '<div class="detail-row"><button class="btn ghost small" data-action="save-notes" data-id="' + it.id + '">Save note</button></div>';
+      html += '<div class="detail-row">';
+      if (it.template_path) {
+        html += '<span class="attach-line">Source templates are available in the local project only.</span>';
+      }
+      if (it.form_path){
+        var url = sb.storage.from('audit-forms').getPublicUrl(it.form_path).data.publicUrl;
+        html += '<span class="attach-line">Form: <a href="' + esc(url) + '" target="_blank" rel="noopener">' + esc(it.form_name || 'attached file') + '</a></span>';
+        if (canEdit) html += '<button class="btn ghost small" data-action="remove-attachment" data-id="' + it.id + '">Remove</button>';
+      } else if (canEdit) {
+        html += '<button class="btn ghost small" data-action="attach-form" data-id="' + it.id + '">Attach form template</button>';
+      } else {
+        html += '<span class="attach-line">No form attached</span>';
+      }
+      html += '</div><div class="detail-row">';
+      if (canPrep) html += '<button class="btn small" data-action="mark-prepared" data-id="' + it.id + '">Mark prepared</button>';
+      if (canRev) html += '<button class="btn small" data-action="mark-reviewed" data-id="' + it.id + '">Mark reviewed</button>';
+      if (canApp) html += '<button class="btn small" data-action="approve-item" data-id="' + it.id + '">Approve &amp; sign off</button>';
+      if (canReopen) html += '<button class="btn small danger" data-action="reopen-item" data-id="' + it.id + '">Reopen</button>';
+      html += '</div>';
+      if (it.status === 'approved') html += '<div class="locked-note">Signed off. A partner can reopen this item if it needs rework.</div>';
+      html += '</div>';
+    }
+    html += '</div>';
+    return html;
+  }
+
+  function canDo(e, it, action){
+    if (!myId) return false;
+    var override = isPartner();
+    if (action === 'prepare') return it.status === 'pending' && (myId === e.preparer_id || override);
+    if (action === 'review') return it.status === 'prepared' && (myId === e.reviewer_id || override);
+    if (action === 'approve') return it.status === 'reviewed' && (myId === e.partner_id || override);
+    if (action === 'reopen') return it.status === 'approved' && (myId === e.partner_id || override);
+    if (action === 'edit') return it.status !== 'approved' && (myId === e.preparer_id || myId === e.reviewer_id || myId === e.partner_id || override);
+    return false;
+  }
+
+  // ---------------- team panel ----------------
+  async function renderTeamPanel(c){
+    var html = '<div class="team-panel"><h1>Team &amp; roles</h1>';
+    html += '<p>Firm-wide roles decide who can create engagements and who can act as reviewer or approving partner. Per-engagement, the assigned preparer, reviewer and partner move that checklist forward.</p>';
+    if (canManageRoles()){
+      html += '<div class="assign-box">';
+      html += '<div class="field"><label>Find a colleague</label><div class="search-wrap"><input type="text" id="team-search" placeholder="Type a name\u2026" autocomplete="off"><div class="search-results" id="team-search-results" style="display:none;"></div></div></div>';
+      html += '<div class="picked" id="team-picked" style="display:none;"></div>';
+      html += '<div class="field" style="margin-top:10px;"><label>Assign role</label><select id="team-role-select">' +
+        ROLE_OPTIONS.map(function(r){ return '<option value="' + r + '">' + r + '</option>'; }).join('') + '</select></div>';
+      html += '<button class="btn small" data-action="assign-role">Assign role</button>';
+      html += '<div id="team-assign-msg" style="font-size:12px;color:var(--stamp);margin-top:8px;"></div></div>';
+    } else {
+      html += '<p style="font-size:12.5px;">Only a Partner can assign firm-wide roles.</p>';
+    }
+    html += '<div id="role-list-wrap"></div></div>';
+    c.innerHTML = html;
+
+    var res = await sb.from('profiles').select('id,full_name,role').order('full_name');
+    var all = res.data || [];
+    all.forEach(function(p){ profileCache[p.id] = p; });
+    var html2 = '<div class="role-list">';
+    all.forEach(function(p){
+      html2 += '<div class="role-row"><span class="name">' + esc(p.full_name || 'Someone') + '</span>' +
+        (canManageRoles() ?
+          '<select data-action="change-role" data-uid="' + p.id + '">' + ROLE_OPTIONS.map(function(r){ return '<option value="' + r + '"' + (r === p.role ? ' selected' : '') + '>' + r + '</option>'; }).join('') + '</select>'
+          : '<span style="font-size:12.5px;color:var(--ink-soft);">' + esc(p.role) + '</span>') +
+        '</div>';
+    });
+    html2 += '</div>';
+    document.getElementById('role-list-wrap').innerHTML = html2;
+  }
+
+  async function doSearch(query, resultsEl, onPick){
+    var res = await sb.from('profiles').select('id,full_name,role').ilike('full_name', '%' + query + '%').limit(8);
+    var hits = res.data || [];
+    if (!hits.length){
+      resultsEl.innerHTML = '<div style="color:var(--ink-soft);cursor:default;">No match for "' + esc(query) + '" &mdash; add them as a user first</div>';
+      resultsEl.style.display = 'block';
+      return;
+    }
+    resultsEl.innerHTML = '';
+    hits.forEach(function(h){
+      var row = document.createElement('div');
+      row.textContent = h.full_name || 'Someone';
+      row.addEventListener('click', function(){ onPick(h.id, h.full_name || 'Someone'); resultsEl.style.display = 'none'; });
+      resultsEl.appendChild(row);
+    });
+    resultsEl.style.display = 'block';
+  }
+
+  async function assignRole(){
+    var sel = document.getElementById('team-role-select');
+    var msg = document.getElementById('team-assign-msg');
+    if (!teamPick){ if (msg) msg.textContent = 'Pick a name from the dropdown list first.'; return; }
+    await sb.from('profiles').update({ role: sel.value }).eq('id', teamPick.id);
+    teamPick = null;
+    if (msg) msg.textContent = '';
+    renderTeamPanel(document.getElementById('content'));
+  }
+
+  // ---------------- engagement creation & team editing ----------------
+  function personPicker(key, label, prefill){
+    var pre = prefill || '';
+    return '<div class="field"><label>' + label + '</label><div class="search-wrap">' +
+      '<input type="text" data-pick="' + key + '" value="' + esc(pre) + '" placeholder="Type a name\u2026" autocomplete="off">' +
+      '<div class="search-results" data-results="' + key + '" style="display:none;"></div></div></div>';
+  }
+
+  function openNewEngagementModal(){
+    newEngPick = { preparer: null, reviewer: null, partner: null };
+    var html = '<div class="overlay" id="modal-overlay"><div class="modal"><h2>New engagement</h2>' +
+      '<div class="field"><label>Client name</label><input type="text" id="f-client"></div>' +
+      '<div class="field"><label for="f-type">Engagement type / reporting framework</label><select id="f-type"><option value="">Select a methodology</option>' + METHODOLOGIES.map(function(m){ return '<option value="' + m.key + '">' + esc(m.label) + '</option>'; }).join('') + '</select></div>' +
+      '<div class="field"><label>Industry</label><input type="text" id="f-industry" placeholder="e.g. Trucking &amp; logistics"></div>' +
+      '<div class="field"><label>Period covered</label><input type="text" id="f-period" placeholder="e.g. FY ending Dec 31, 2026"></div>' +
+      personPicker('preparer', 'Preparer') + personPicker('reviewer', 'Reviewer') + personPicker('partner', 'Engagement partner') +
+      '<div class="modal-actions"><button class="btn ghost" data-action="close-modal">Cancel</button><button class="btn" data-action="create-engagement">Create</button></div></div></div>';
+    document.body.insertAdjacentHTML('beforeend', html);
+  }
+
+  async function openEditTeamModal(id){
+    var e = engagements.filter(function(x){ return x.id === id; })[0];
+    if (!e) return;
+    newEngPick = { preparer: e.preparer_id || null, reviewer: e.reviewer_id || null, partner: e.partner_id || null };
+    var names = await resolveNames([e.preparer_id, e.reviewer_id, e.partner_id].filter(Boolean));
+    var html = '<div class="overlay" id="modal-overlay"><div class="modal"><h2>Edit team assignments</h2>' +
+      personPicker('preparer', 'Preparer', e.preparer_id ? names[e.preparer_id] : '') +
+      personPicker('reviewer', 'Reviewer', e.reviewer_id ? names[e.reviewer_id] : '') +
+      personPicker('partner', 'Engagement partner', e.partner_id ? names[e.partner_id] : '') +
+      '<div class="modal-actions"><button class="btn ghost" data-action="close-modal">Cancel</button><button class="btn" data-action="save-team" data-id="' + id + '">Save</button></div></div></div>';
+    document.body.insertAdjacentHTML('beforeend', html);
+  }
+
+  function closeModal(){ var o = document.getElementById('modal-overlay'); if (o) o.remove(); }
+
+  async function createEngagement(){
+    var clientName = document.getElementById('f-client').value.trim();
+    if (!clientName){ document.getElementById('f-client').focus(); return; }
+    var engagementType = document.getElementById('f-type').value;
+    var method = METHODOLOGIES.find(function(m){ return m.key === engagementType; });
+    if (!method) { document.getElementById('f-type').focus(); return; }
+    var industry = document.getElementById('f-industry').value.trim();
+    var period = document.getElementById('f-period').value.trim();
+    closeModal();
+    var ins = await sb.from('engagements').insert({
+      client_name: clientName, industry: industry, period: period, status: 'Planning', engagement_type: engagementType,
+      preparer_id: newEngPick.preparer, reviewer_id: newEngPick.reviewer, partner_id: newEngPick.partner,
+      created_by: myId
+    }).select().single();
+    if (ins.error){ alert('Could not create engagement: ' + ins.error.message); return; }
+    var engId = ins.data.id;
+    var rows = [];
+    var order = 1;
+    PHASES.forEach(function(p){
+      method.phases[p.key].forEach(function(paper){
+        rows.push({ engagement_id: engId, phase: p.key, ref: paper.ref, title: paper.title, template_path: paper.path, template_inherited: !!paper.inherited, status: 'pending', notes: '', order_num: order++ });
+      });
+    });
+    await sb.from('checklist_items').insert(rows);
+    await loadEngagements();
+    await selectEngagement(engId);
+  }
+
+  async function saveTeam(id){
+    closeModal();
+    await sb.from('engagements').update({ preparer_id: newEngPick.preparer, reviewer_id: newEngPick.reviewer, partner_id: newEngPick.partner }).eq('id', id);
+    await loadEngagements();
+  }
+
+  // ---------------- item actions ----------------
+  async function setStatus(itemId, status){ await sb.from('checklist_items').update({ status: status }).eq('id', itemId); await reloadChecklist(); }
+  async function saveNotes(itemId){
+    var ta = document.querySelector('[data-item-notes="' + itemId + '"]');
+    if (!ta) return;
+    await sb.from('checklist_items').update({ notes: ta.value }).eq('id', itemId);
+  }
+  async function removeAttachment(itemId){
+    var it = checklistItems.filter(function(x){ return x.id === itemId; })[0];
+    if (!it) return;
+    if (it.form_path) await sb.storage.from('audit-forms').remove([it.form_path]);
+    await sb.from('checklist_items').update({ form_path: null, form_name: null }).eq('id', itemId);
+    await reloadChecklist();
+  }
+  async function handleFileChosen(file){
+    if (!pendingFileTarget) return;
+    var itemId = pendingFileTarget;
+    pendingFileTarget = null;
+    var path = selectedEngagementId + '/' + itemId + '/' + Date.now() + '-' + file.name;
+    var up = await sb.storage.from('audit-forms').upload(path, file, { upsert: true });
+    if (up.error){ alert('Upload failed: ' + up.error.message); return; }
+    await sb.from('checklist_items').update({ form_path: path, form_name: file.name }).eq('id', itemId);
+    await reloadChecklist();
+  }
+  function exportCsv(){
+    var e = engagements.filter(function(x){ return x.id === selectedEngagementId; })[0];
+    if (!e) return;
+    var rows = [['Ref','Phase','Item','Status','Notes']];
+    PHASES.forEach(function(p){
+      checklistItems.filter(function(it){ return it.phase === p.key; })
+        .sort(function(a,b){ return (a.order_num||0)-(b.order_num||0); })
+        .forEach(function(it){ rows.push([it.ref, p.label, it.title, statusLabel(it.status), (it.notes||'').replace(/\n/g,' ')]); });
+    });
+    var csv = rows.map(function(r){
+      return r.map(function(cell){
+        var s = String(cell === undefined ? '' : cell);
+        if (s.indexOf(',') > -1 || s.indexOf('"') > -1) s = '"' + s.replace(/"/g,'""') + '"';
+        return s;
+      }).join(',');
+    }).join('\r\n');
+    var blob = new Blob([csv], { type: 'text/csv' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = (e.client_name || 'engagement') + ' - audit status.csv';
+    document.body.appendChild(a); a.click(); a.remove();
+  }
+
+  // ---------------- events ----------------
+  document.addEventListener('click', function(ev){
+    var el = ev.target.closest('[data-action]');
+    if (!el) return;
+    var action = el.getAttribute('data-action');
+    if (action === 'select-engagement') selectEngagement(el.getAttribute('data-id'));
+    else if (action === 'new-engagement') openNewEngagementModal();
+    else if (action === 'close-modal') closeModal();
+    else if (action === 'create-engagement') createEngagement();
+    else if (action === 'open-team'){ view = 'team'; renderContent(); renderSidebar(); }
+    else if (action === 'select-phase'){ activePhase = el.getAttribute('data-phase'); openItemId = null; renderContent(); }
+    else if (action === 'toggle-item'){ var id = el.getAttribute('data-id'); openItemId = (openItemId === id) ? null : id; renderContent(); }
+    else if (action === 'mark-prepared') setStatus(el.getAttribute('data-id'), 'prepared');
+    else if (action === 'mark-reviewed') setStatus(el.getAttribute('data-id'), 'reviewed');
+    else if (action === 'approve-item') setStatus(el.getAttribute('data-id'), 'approved');
+    else if (action === 'reopen-item') setStatus(el.getAttribute('data-id'), 'prepared');
+    else if (action === 'save-notes') saveNotes(el.getAttribute('data-id'));
+    else if (action === 'remove-attachment') removeAttachment(el.getAttribute('data-id'));
+    else if (action === 'attach-form'){ pendingFileTarget = el.getAttribute('data-id'); document.getElementById('file-input').click(); }
+    else if (action === 'export-csv') exportCsv();
+    else if (action === 'assign-role') assignRole();
+    else if (action === 'edit-team') openEditTeamModal(el.getAttribute('data-id'));
+    else if (action === 'save-team') saveTeam(el.getAttribute('data-id'));
+    else if (action === 'sign-out') doSignOut();
+  });
+
+  document.addEventListener('input', function(ev){
+    var t = ev.target;
+    if (t.id === 'team-search'){
+      var results = document.getElementById('team-search-results');
+      doSearch(t.value, results, function(id, name){ teamPick = { id: id, name: name }; t.value = name; });
+    } else if (t.hasAttribute('data-pick')){
+      var key = t.getAttribute('data-pick');
+      var results = document.querySelector('[data-results="' + key + '"]');
+      doSearch(t.value, results, function(id, name){ newEngPick[key] = id; t.value = name; });
+    }
+  });
+
+  document.addEventListener('change', function(ev){
+    if (ev.target.id === 'file-input' && ev.target.files && ev.target.files[0]){
+      handleFileChosen(ev.target.files[0]); ev.target.value = '';
+    } else if (ev.target.matches('[data-action="change-role"]')){
+      sb.from('profiles').update({ role: ev.target.value }).eq('id', ev.target.getAttribute('data-uid')).then(function(){});
+    }
+  });
+})();
+</script>
+</body>
+</html>
